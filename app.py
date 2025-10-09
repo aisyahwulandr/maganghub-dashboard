@@ -85,6 +85,14 @@ if "deskripsi_posisi" in df.columns:
     deskripsi = st.sidebar.text_input("Cari Deskripsi Posisi")
     if deskripsi:
         df = df[df["deskripsi_posisi"].str.contains(deskripsi, case=False, na=False)]
+        
+# Filter program studi
+if "program_studi" in df.columns:
+    program_studi = st.sidebar.multiselect(
+        "Filter Program Studi", df["program_studi"].dropna().unique()
+    )
+    if program_studi:
+        df = df[df["program_studi"].isin(program_studi)]
 
 # Filter provinsi
 provinsi = st.sidebar.multiselect(
@@ -173,7 +181,7 @@ page = st.number_input("Halaman:", min_value=1, max_value=total_pages, value=1, 
 start = (page - 1) * items_per_page
 end = start + items_per_page
 cols_show = [
-    "perusahaan.nama_perusahaan", "posisi", "deskripsi_posisi", 
+    "perusahaan.nama_perusahaan", "posisi", "deskripsi_posisi", "program_studi",
     "perusahaan.nama_provinsi", "perusahaan.nama_kabupaten", "perusahaan.alamat" ,
     "jumlah_kuota", "jumlah_terdaftar",
     "jadwal.tanggal_mulai", "jadwal.tanggal_selesai"
