@@ -57,6 +57,21 @@ df = normalize_column(df, "perusahaan", "perusahaan")
 df = normalize_column(df, "jadwal", "jadwal")
 df = normalize_column(df, "ref_status_posisi", "status")
 
+# --- Normalisasi khusus program_studi ---
+if "program_studi" in df.columns:
+    def extract_programs(x):
+        if pd.isna(x):
+            return None
+        try:
+            data = ast.literal_eval(x) if isinstance(x, str) else x
+            if isinstance(data, list):
+                return ", ".join([d.get("title", "") for d in data if isinstance(d, dict)])
+            return None
+        except Exception:
+            return None
+
+    df["program_studi_clean"] = df["program_studi"].apply(extract_programs)
+
 # --- Pastikan kolom penting ada ---
 for col in ["perusahaan.nama_perusahaan", "perusahaan.nama_kabupaten", "perusahaan.nama_provinsi","perusahaan.alamat"]:
     if col not in df.columns:
@@ -87,12 +102,10 @@ if "deskripsi_posisi" in df.columns:
         df = df[df["deskripsi_posisi"].str.contains(deskripsi, case=False, na=False)]
         
 # Filter program studi
-if "program_studi" in df.columns:
-    program_studi = st.sidebar.multiselect(
-        "Filter Program Studi", df["program_studi"].dropna().unique()
-    )
-    if program_studi:
-        df = df[df["program_studi"].isin(program_studi)]
+if "program_studi_clean" in df.columns:
+    cari_prodi = st.sidebar.text_input("Cari Program Studi")
+    if cari_prodi:
+        df = df[df["program_studi_clean"].str.contains(cari_prodi, case=False, na=False)]
 
 # Filter provinsi
 provinsi = st.sidebar.multiselect(
@@ -181,7 +194,7 @@ page = st.number_input("Halaman:", min_value=1, max_value=total_pages, value=1, 
 start = (page - 1) * items_per_page
 end = start + items_per_page
 cols_show = [
-    "perusahaan.nama_perusahaan", "posisi", "deskripsi_posisi", "program_studi",
+    "perusahaan.nama_perusahaan", "posisi", "deskripsi_posisi", "program_studi_clean",
     "perusahaan.nama_provinsi", "perusahaan.nama_kabupaten", "perusahaan.alamat" ,
     "jumlah_kuota", "jumlah_terdaftar",
     "jadwal.tanggal_mulai", "jadwal.tanggal_selesai"
