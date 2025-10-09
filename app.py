@@ -58,23 +58,70 @@ df = normalize_column(df, "jadwal", "jadwal")
 df = normalize_column(df, "ref_status_posisi", "status")
 
 # --- Pastikan kolom penting ada ---
-for col in ["perusahaan.nama_perusahaan", "perusahaan.nama_kabupaten", "perusahaan.nama_provinsi"]:
+for col in ["perusahaan.nama_perusahaan", "perusahaan.nama_kabupaten", "perusahaan.nama_provinsi","perusahaan.alamat"]:
     if col not in df.columns:
         df[col] = "Tidak diketahui"
 
 # --- Sidebar Filter ---
 st.sidebar.header("🔍 Filter Data")
+
+# Filter perusahaan
 perusahaan = st.sidebar.multiselect(
     "Filter Perusahaan", df["perusahaan.nama_perusahaan"].dropna().unique()
 )
 if perusahaan:
     df = df[df["perusahaan.nama_perusahaan"].isin(perusahaan)]
 
+# Filter posisi
+posisi = st.sidebar.multiselect(
+    "Filter Posisi", df["posisi"].dropna().unique()
+)
+if posisi:
+    df = df[df["posisi"].isin(posisi)]
+
+# Filter deskripsi posisi
+deskripsi = st.sidebar.text_input("Cari Deskripsi Posisi")
+if deskripsi:
+    df = df[df["deskripsi_posisi"].str.contains(deskripsi, case=False, na=False)]
+
+# Filter provinsi
+provinsi = st.sidebar.multiselect(
+    "Filter Lokasi (Provinsi)", df["perusahaan.nama_provinsi"].dropna().unique()
+)
+if provinsi:
+    df = df[df["perusahaan.nama_provinsi"].isin(provinsi)]
+
+# Filter kabupaten
 kabupaten = st.sidebar.multiselect(
     "Filter Lokasi (Kabupaten)", df["perusahaan.nama_kabupaten"].dropna().unique()
 )
 if kabupaten:
     df = df[df["perusahaan.nama_kabupaten"].isin(kabupaten)]
+
+# Filter alamat
+alamat = st.sidebar.multiselect(
+    "Filter Lokasi (Alamat)", df["perusahaan.alamat"].dropna().unique()
+)
+if alamat:
+    df = df[df["perusahaan.alamat"].isin(alamat)]
+
+# Filter jumlah kuota
+kuota_min, kuota_max = st.sidebar.slider(
+    "Filter Jumlah Kuota", 
+    int(df["jumlah_kuota"].min()), 
+    int(df["jumlah_kuota"].max()), 
+    (int(df["jumlah_kuota"].min()), int(df["jumlah_kuota"].max()))
+)
+df = df[(df["jumlah_kuota"] >= kuota_min) & (df["jumlah_kuota"] <= kuota_max)]
+
+# Filter jumlah terdaftar
+terdaftar_min, terdaftar_max = st.sidebar.slider(
+    "Filter Jumlah Terdaftar", 
+    int(df["jumlah_terdaftar"].min()), 
+    int(df["jumlah_terdaftar"].max()), 
+    (int(df["jumlah_terdaftar"].min()), int(df["jumlah_terdaftar"].max()))
+)
+df = df[(df["jumlah_terdaftar"] >= terdaftar_min) & (df["jumlah_terdaftar"] <= terdaftar_max)]
 
 # --- Grafik Lowongan per Kabupaten ---
 st.subheader("📍 Jumlah Lowongan per Kabupaten")
@@ -115,9 +162,10 @@ page = st.number_input("Halaman:", min_value=1, max_value=total_pages, value=1, 
 start = (page - 1) * items_per_page
 end = start + items_per_page
 cols_show = [
-    "posisi", "deskripsi_posisi", "jumlah_kuota", "jumlah_terdaftar",
-    "perusahaan.nama_perusahaan", "perusahaan.nama_kabupaten",
-    "perusahaan.nama_provinsi", "jadwal.tanggal_mulai", "jadwal.tanggal_selesai"
+    "perusahaan.nama_perusahaan", "posisi", "deskripsi_posisi", 
+    "perusahaan.nama_provinsi", "perusahaan.nama_kabupaten", "perusahaan.alamat" ,
+    "jumlah_kuota", "jumlah_terdaftar",
+    "jadwal.tanggal_mulai", "jadwal.tanggal_selesai"
 ]
 cols_show = [c for c in cols_show if c in df.columns]
 

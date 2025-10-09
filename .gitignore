@@ -18,8 +18,8 @@ ENV/
 .ipynb_checkpoints/
 
 # Data hasil scraping
-data/*.csv
-data/*.json
+# data/*.csv
+# data/*.json
 
 # System / IDE files
 .DS_Store
