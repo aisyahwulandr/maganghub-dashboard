@@ -73,16 +73,18 @@ if perusahaan:
     df = df[df["perusahaan.nama_perusahaan"].isin(perusahaan)]
 
 # Filter posisi
-posisi = st.sidebar.multiselect(
-    "Filter Posisi", df["posisi"].dropna().unique()
-)
-if posisi:
-    df = df[df["posisi"].isin(posisi)]
+if "posisi" in df.columns:
+    posisi = st.sidebar.multiselect(
+        "Filter Posisi", df["posisi"].dropna().unique()
+    )
+    if posisi:
+        df = df[df["posisi"].isin(posisi)]
 
-# Filter deskripsi posisi
-deskripsi = st.sidebar.text_input("Cari Deskripsi Posisi")
-if deskripsi:
-    df = df[df["deskripsi_posisi"].str.contains(deskripsi, case=False, na=False)]
+# Filter deskripsi posisi (pakai search text)
+if "deskripsi_posisi" in df.columns:
+    deskripsi = st.sidebar.text_input("Cari Deskripsi Posisi")
+    if deskripsi:
+        df = df[df["deskripsi_posisi"].str.contains(deskripsi, case=False, na=False)]
 
 # Filter provinsi
 provinsi = st.sidebar.multiselect(
@@ -99,29 +101,38 @@ if kabupaten:
     df = df[df["perusahaan.nama_kabupaten"].isin(kabupaten)]
 
 # Filter alamat
-alamat = st.sidebar.multiselect(
-    "Filter Lokasi (Alamat)", df["perusahaan.alamat"].dropna().unique()
-)
-if alamat:
-    df = df[df["perusahaan.alamat"].isin(alamat)]
+if "perusahaan.alamat" in df.columns:
+    alamat = st.sidebar.multiselect(
+        "Filter Lokasi (Alamat)", df["perusahaan.alamat"].dropna().unique()
+    )
+    if alamat:
+        df = df[df["perusahaan.alamat"].isin(alamat)]
 
 # Filter jumlah kuota
-kuota_min, kuota_max = st.sidebar.slider(
-    "Filter Jumlah Kuota", 
-    int(df["jumlah_kuota"].min()), 
-    int(df["jumlah_kuota"].max()), 
-    (int(df["jumlah_kuota"].min()), int(df["jumlah_kuota"].max()))
-)
-df = df[(df["jumlah_kuota"] >= kuota_min) & (df["jumlah_kuota"] <= kuota_max)]
+if "jumlah_kuota" in df.columns and df["jumlah_kuota"].notna().any():
+    kuota_min = int(df["jumlah_kuota"].min())
+    kuota_max = int(df["jumlah_kuota"].max())
+    if kuota_min != kuota_max:
+        kuota_min, kuota_max = st.sidebar.slider(
+            "Filter Jumlah Kuota",
+            kuota_min, kuota_max, (kuota_min, kuota_max)
+        )
+        df = df[(df["jumlah_kuota"] >= kuota_min) & (df["jumlah_kuota"] <= kuota_max)]
+    else:
+        st.sidebar.info(f"Jumlah kuota semua data: {kuota_min}")
 
 # Filter jumlah terdaftar
-terdaftar_min, terdaftar_max = st.sidebar.slider(
-    "Filter Jumlah Terdaftar", 
-    int(df["jumlah_terdaftar"].min()), 
-    int(df["jumlah_terdaftar"].max()), 
-    (int(df["jumlah_terdaftar"].min()), int(df["jumlah_terdaftar"].max()))
-)
-df = df[(df["jumlah_terdaftar"] >= terdaftar_min) & (df["jumlah_terdaftar"] <= terdaftar_max)]
+if "jumlah_terdaftar" in df.columns and df["jumlah_terdaftar"].notna().any():
+    terdaftar_min = int(df["jumlah_terdaftar"].min())
+    terdaftar_max = int(df["jumlah_terdaftar"].max())
+    if terdaftar_min != terdaftar_max:
+        terdaftar_min, terdaftar_max = st.sidebar.slider(
+            "Filter Jumlah Terdaftar",
+            terdaftar_min, terdaftar_max, (terdaftar_min, terdaftar_max)
+        )
+        df = df[(df["jumlah_terdaftar"] >= terdaftar_min) & (df["jumlah_terdaftar"] <= terdaftar_max)]
+    else:
+        st.sidebar.info(f"Jumlah terdaftar semua data: {terdaftar_min}")
 
 # --- Grafik Lowongan per Kabupaten ---
 st.subheader("📍 Jumlah Lowongan per Kabupaten")
@@ -153,7 +164,7 @@ if not df.empty:
 # --- Tabel dengan Pagination ---
 st.subheader("📋 Daftar Lowongan")
 
-items_per_page = 10
+items_per_page = 20
 total_items = len(df)
 total_pages = math.ceil(total_items / items_per_page) if total_items > 0 else 1
 
