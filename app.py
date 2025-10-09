@@ -1,29 +1,52 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import ast  # untuk parsing dict string
-import subprocess  # untuk jalankan main.py
+import ast
 import math
+import os
+import subprocess
+from api_client import fetch_all_jobs  # ambil langsung dari modul scraper
 
 st.set_page_config(page_title="Dashboard MagangHub", layout="wide")
-
 st.title("📊 Dashboard Lowongan MagangHub")
 
-# --- Tombol Refresh Data ---
-if st.button("🔄 Refresh Data dari API"):
-    st.write("Mengambil data terbaru dari MagangHub...")
-    subprocess.run(["python", "main.py"])
-    st.success("Data berhasil diperbarui!")
+# --- Pilih Mode Data ---
+st.sidebar.header("⚙️ Mode Data")
+mode = st.sidebar.radio("Pilih sumber data:", ("CSV Lokal", "API Online"))
 
-# --- Load CSV ---
-df = pd.read_csv("data/maganghub_jobs.csv")
+# --- Load Data ---
+df = None
+if mode == "CSV Lokal":
+    # tombol refresh hanya untuk CSV
+    if st.button("🔄 Refresh Data dari API"):
+        st.write("Mengambil data terbaru dari MagangHub...")
+        subprocess.run(["python", "main.py"])
+        st.success("Data berhasil diperbarui!")
 
-# --- Normalisasi kolom nested (perusahaan, jadwal, status) ---
+    csv_path = "data/maganghub_jobs.csv"
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        st.success("✅ Data dimuat dari CSV lokal")
+    else:
+        st.error("❌ CSV lokal tidak ditemukan. Jalankan `main.py` dulu atau klik Refresh.")
+        st.stop()
+
+else:
+    st.info("🔄 Mengambil data dari API MagangHub...")
+    jobs = fetch_all_jobs(limit_total=200, per_page=20)
+    if not jobs:
+        st.error("❌ Gagal mengambil data dari API.")
+        st.stop()
+    df = pd.DataFrame(jobs)
+    st.success(f"✅ Berhasil ambil {len(df)} data dari API")
+
+# --- Normalisasi kolom nested ---
 def normalize_column(df, col_name, prefix):
     if col_name in df.columns:
         parsed = df[col_name].dropna().apply(
-            lambda x: ast.literal_eval(x) if isinstance(x, str) else {}
+            lambda x: ast.literal_eval(x) if isinstance(x, str) else x
         )
+        parsed = parsed.apply(lambda x: x if isinstance(x, dict) else {})
         normalized = pd.json_normalize(parsed)
         normalized = normalized.add_prefix(prefix + ".")
         df = df.drop(columns=[col_name])
@@ -35,12 +58,9 @@ df = normalize_column(df, "jadwal", "jadwal")
 df = normalize_column(df, "ref_status_posisi", "status")
 
 # --- Pastikan kolom penting ada ---
-if "perusahaan.nama_perusahaan" not in df.columns:
-    df["perusahaan.nama_perusahaan"] = "Tidak diketahui"
-if "perusahaan.nama_kabupaten" not in df.columns:
-    df["perusahaan.nama_kabupaten"] = "Tidak diketahui"
-if "perusahaan.nama_provinsi" not in df.columns:
-    df["perusahaan.nama_provinsi"] = "Tidak diketahui"
+for col in ["perusahaan.nama_perusahaan", "perusahaan.nama_kabupaten", "perusahaan.nama_provinsi"]:
+    if col not in df.columns:
+        df[col] = "Tidak diketahui"
 
 # --- Sidebar Filter ---
 st.sidebar.header("🔍 Filter Data")
@@ -101,17 +121,11 @@ cols_show = [
 ]
 cols_show = [c for c in cols_show if c in df.columns]
 
-# slice data sesuai halaman
 df_page = df.iloc[start:end][cols_show].copy()
-
-# tambahkan kolom No (1,2,3,...)
 df_page.insert(0, "No", range(start + 1, start + 1 + len(df_page)))
-
-# jadikan kolom No sebagai index (mengganti index default)
 df_page = df_page.set_index("No")
 
 st.dataframe(df_page, use_container_width=True)
-
 st.caption(f"Menampilkan {start+1}-{min(end,total_items)} dari {total_items} data")
 
 # --- Download Button ---
