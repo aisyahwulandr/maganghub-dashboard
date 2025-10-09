@@ -1,0 +1,19 @@
+# Pastikan semua file teks pakai LF (Linux/Mac style)
+* text=auto eol=lf
+
+# Python source files
+*.py text diff=python
+
+# Jupyter notebooks
+*.ipynb text
+
+# CSV / JSON / Markdown (biar tetap teks normal)
+*.csv text
+*.json text
+*.md text
+
+# Windows batch
+*.bat text eol=crlf
+
+# Shell scripts
+*.sh text eol=lf

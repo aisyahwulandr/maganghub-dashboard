@@ -1,0 +1,36 @@
+# Python cache & compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Streamlit cache
+.streamlit/
+
+# Jupyter Notebook checkpoints (kalau pakai notebook)
+.ipynb_checkpoints/
+
+# Data hasil scraping
+data/*.csv
+data/*.json
+
+# System / IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs & temp
+*.log
+*.tmp
+*.swp
+
+# Backup files
+*~
