@@ -154,6 +154,44 @@ if "jumlah_terdaftar" in df.columns and df["jumlah_terdaftar"].notna().any():
         df = df[(df["jumlah_terdaftar"] >= terdaftar_min) & (df["jumlah_terdaftar"] <= terdaftar_max)]
     else:
         st.sidebar.info(f"Jumlah terdaftar semua data: {terdaftar_min}")
+        
+# Filter created_at
+if "created_at" in df.columns:
+    # ubah ke datetime
+    df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
+
+    created_min = df["created_at"].min()
+    created_max = df["created_at"].max()
+
+    created_range = st.sidebar.date_input(
+        "Filter Tanggal Dibuat",
+        value=(created_min.date(), created_max.date()),
+        min_value=created_min.date(),
+        max_value=created_max.date()
+    )
+
+    if created_range:
+        start, end = created_range
+        df = df[(df["created_at"].dt.date >= start) & (df["created_at"].dt.date <= end)]
+
+# Filter updated_at
+if "updated_at" in df.columns:
+    df["updated_at"] = pd.to_datetime(df["updated_at"], errors="coerce")
+
+    updated_min = df["updated_at"].min()
+    updated_max = df["updated_at"].max()
+
+    updated_range = st.sidebar.date_input(
+        "Filter Tanggal Diupdate",
+        value=(updated_min.date(), updated_max.date()),
+        min_value=updated_min.date(),
+        max_value=updated_max.date()
+    )
+
+    if updated_range:
+        start, end = updated_range
+        df = df[(df["updated_at"].dt.date >= start) & (df["updated_at"].dt.date <= end)]
+
 
 # --- Grafik Lowongan per Kabupaten ---
 st.subheader("📍 Jumlah Lowongan per Kabupaten")
@@ -185,7 +223,7 @@ if not df.empty:
 # --- Tabel dengan Pagination ---
 st.subheader("📋 Daftar Lowongan")
 
-items_per_page = 20
+items_per_page = 10
 total_items = len(df)
 total_pages = math.ceil(total_items / items_per_page) if total_items > 0 else 1
 
@@ -196,7 +234,7 @@ end = start + items_per_page
 cols_show = [
     "perusahaan.nama_perusahaan", "posisi", "deskripsi_posisi", "program_studi_clean",
     "perusahaan.nama_provinsi", "perusahaan.nama_kabupaten", "perusahaan.alamat" ,
-    "jumlah_kuota", "jumlah_terdaftar",
+    "jumlah_kuota", "jumlah_terdaftar", "created_at", "updated_at",
     "jadwal.tanggal_mulai", "jadwal.tanggal_selesai"
 ]
 cols_show = [c for c in cols_show if c in df.columns]
