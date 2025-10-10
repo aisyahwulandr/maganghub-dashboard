@@ -6,8 +6,16 @@ import math
 import os
 import subprocess
 from api_client import fetch_all_jobs  # ambil langsung dari modul scraper
+from sessions import track_sessions, admin_auth
 
 st.set_page_config(page_title="Dashboard MagangHub", layout="wide")
+
+# hitung sessions
+sessions = track_sessions(timeout=120, max_sessions=50)
+
+# panel admin
+admin_auth(sessions)
+
 st.title("📊 Dashboard Lowongan MagangHub")
 
 # --- Pilih Mode Data ---

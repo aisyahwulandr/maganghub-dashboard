@@ -34,3 +34,6 @@ Thumbs.db
 
 # Backup files
 *~
+
+# Streamlit secrets
+.streamlit/secrets.toml
